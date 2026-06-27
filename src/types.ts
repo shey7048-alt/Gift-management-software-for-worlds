@@ -52,3 +52,9 @@ export interface AppUser {
   role: 'admin' | 'viewer';
   displayName?: string;
 }
+
+export interface BrandConfig {
+  logoUrl?: string;
+  orgName: string;
+}
+

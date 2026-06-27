@@ -1,23 +1,27 @@
-import { Building, LogOut, User, Sparkles, AlertCircle } from 'lucide-react';
+import { LogOut, User, Sparkles, AlertCircle, Settings } from 'lucide-react';
 import { isFirebaseAvailable } from '../firebase';
+import Logo from './Logo';
+import { BrandConfig } from '../types';
 
 interface NavbarProps {
   user: { email: string; displayName?: string };
+  brandConfig: BrandConfig;
+  onEditBrand: () => void;
   onLogout: () => void;
 }
 
-export default function Navbar({ user, onLogout }: NavbarProps) {
+export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: NavbarProps) {
   return (
     <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm shadow-slate-100/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo and Brand */}
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 text-white p-2 rounded-xl">
-              <Building className="h-6 w-6" />
-            </div>
+            <Logo brandConfig={brandConfig} className="h-10 w-10" iconClassName="h-6 w-6" />
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">שי אולמות</h1>
+              <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
+                {brandConfig.orgName}
+              </h1>
               <p className="text-xs text-slate-500 font-medium">Shai Olamot Expense Management</p>
             </div>
           </div>
@@ -35,6 +39,15 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Brand Settings Trigger */}
+              <button
+                onClick={onEditBrand}
+                title="הגדרות מיתוג ולוגו"
+                className="p-2 border border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 rounded-xl transition-all duration-150"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+
               {/* Dev mode / Firebase status indicator */}
               <span 
                 className={`text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md hidden md:inline-flex items-center gap-1 ${

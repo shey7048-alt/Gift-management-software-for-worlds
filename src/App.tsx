@@ -3,12 +3,14 @@ import {
   isFirebaseAvailable, db, auth, onAuthStateChanged, signOut,
   collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy, where 
 } from './firebase';
-import { WeeklyPeriod, Expense } from './types';
+import { WeeklyPeriod, Expense, BrandConfig } from './types';
 import LoginScreen from './components/LoginScreen';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import WeeklyPeriodModal from './components/WeeklyPeriodModal';
 import ExpenseModal from './components/ExpenseModal';
+import BrandSettingsModal from './components/BrandSettingsModal';
+import Logo from './components/Logo';
 import { Building, Sparkles } from 'lucide-react';
 
 // Seed initial data in case local storage and Firebase are empty
@@ -104,6 +106,13 @@ export default function App() {
   const [expenses, setExpenses] = useState<{ [periodId: string]: Expense[] }>({});
   const [dbLoading, setDbLoading] = useState(false);
 
+  // Brand config state
+  const [brandConfig, setBrandConfig] = useState<BrandConfig>({
+    logoUrl: localStorage.getItem('shai_olamot_logo_url') || '',
+    orgName: localStorage.getItem('shai_olamot_org_name') || 'שי אולמות',
+  });
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+
   // Modals state
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<WeeklyPeriod | null>(null);
@@ -198,6 +207,23 @@ export default function App() {
             setPeriods(loadedPeriods);
             setExpenses(loadedExpenses);
           }
+
+          // Load Brand Config
+          try {
+            const brandDoc = await getDoc(doc(db, 'settings', 'brand'));
+            if (brandDoc.exists()) {
+              const data = brandDoc.data() as BrandConfig;
+              setBrandConfig(data);
+              if (data.logoUrl) {
+                localStorage.setItem('shai_olamot_logo_url', data.logoUrl);
+              } else {
+                localStorage.removeItem('shai_olamot_logo_url');
+              }
+              localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי אולמות');
+            }
+          } catch (brandError) {
+            console.error("Error loading brand config:", brandError);
+          }
         } else {
           // Local storage fallback
           console.log("Loading data from local storage fallback...");
@@ -228,6 +254,24 @@ export default function App() {
   const handleLoginSuccess = (loggedInUser: { uid: string; email: string; displayName?: string }) => {
     setUser(loggedInUser);
     localStorage.setItem('shai_olamot_cached_user', JSON.stringify(loggedInUser));
+  };
+
+  const handleSaveBrandConfig = async (newConfig: BrandConfig) => {
+    setBrandConfig(newConfig);
+    if (newConfig.logoUrl) {
+      localStorage.setItem('shai_olamot_logo_url', newConfig.logoUrl);
+    } else {
+      localStorage.removeItem('shai_olamot_logo_url');
+    }
+    localStorage.setItem('shai_olamot_org_name', newConfig.orgName);
+
+    if (isFirebaseAvailable && db) {
+      try {
+        await setDoc(doc(db, 'settings', 'brand'), newConfig);
+      } catch (err) {
+        console.error("Failed to save brand config to Firestore:", err);
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -368,23 +412,26 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4">
-        <div className="bg-emerald-600 text-white p-4 rounded-3xl shadow-lg animate-bounce">
-          <Building className="h-10 w-10" />
-        </div>
-        <p className="text-sm font-semibold text-slate-700">Loading Shai Olamot Portal...</p>
+        <Logo brandConfig={brandConfig} className="h-20 w-20 shadow-xl shadow-slate-100 animate-bounce" iconClassName="h-10 w-10" />
+        <p className="text-sm font-semibold text-slate-700">Loading {brandConfig.orgName} Portal...</p>
       </div>
     );
   }
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return <LoginScreen brandConfig={brandConfig} onLoginSuccess={handleLoginSuccess} />;
   }
 
   const selectedPeriodObj = periods.find(p => p.id === selectedPeriodForExpense);
 
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-900 flex flex-col font-sans">
-      <Navbar user={user} onLogout={handleLogout} />
+      <Navbar 
+        user={user} 
+        brandConfig={brandConfig} 
+        onEditBrand={() => setIsBrandModalOpen(true)} 
+        onLogout={handleLogout} 
+      />
 
       {dbLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-4">
@@ -445,6 +492,13 @@ export default function App() {
         onSave={handleSaveExpense}
         initialExpense={editingExpense || undefined}
         weekLabel={selectedPeriodObj ? selectedPeriodObj.weekLabel : ''}
+      />
+
+      <BrandSettingsModal
+        isOpen={isBrandModalOpen}
+        onClose={() => setIsBrandModalOpen(false)}
+        brandConfig={brandConfig}
+        onSave={handleSaveBrandConfig}
       />
     </div>
   );

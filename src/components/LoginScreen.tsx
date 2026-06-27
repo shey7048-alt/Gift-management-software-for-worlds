@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Building, Lock, Mail, Sparkles, Loader2, UserCheck } from 'lucide-react';
+import { Lock, Mail, Sparkles, Loader2, UserCheck } from 'lucide-react';
 import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, isFirebaseAvailable } from '../firebase';
+import Logo from './Logo';
+import { BrandConfig } from '../types';
 
 interface LoginScreenProps {
+  brandConfig: BrandConfig;
   onLoginSuccess: (user: { uid: string; email: string; displayName?: string }) => void;
 }
 
-export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
+export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -87,15 +90,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   };
 
   return (
-    <div id="login-container" className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div id="login-container" className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-fade-in">
       <div className="sm:mx-auto w-full max-w-md">
         <div className="flex justify-center items-center gap-3">
-          <div className="bg-emerald-600 text-white p-3 rounded-2xl shadow-md shadow-emerald-200">
-            <Building className="h-8 w-8" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-800">שי אולמות</span>
+          <Logo brandConfig={brandConfig} className="h-14 w-14 shadow-lg shadow-slate-100" iconClassName="h-8 w-8" />
+          <span className="text-3xl font-black tracking-tight text-slate-900 font-sans">
+            {brandConfig.orgName}
+          </span>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">
+        <h2 className="mt-6 text-center text-2xl font-extrabold tracking-tight text-slate-800">
           Shai Olamot Expense Portal
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
