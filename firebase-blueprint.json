@@ -1,0 +1,40 @@
+{
+  "collections": {
+    "users": {
+      "schema": {
+        "uid": "string",
+        "email": "string",
+        "role": "string",
+        "displayName": "string"
+      }
+    },
+    "weeklyPeriods": {
+      "schema": {
+        "id": "string",
+        "weekLabel": "string",
+        "startDate": "string",
+        "endDate": "string",
+        "status": "string",
+        "notes": "string",
+        "createdAt": "string"
+      }
+    },
+    "expenses": {
+      "schema": {
+        "id": "string",
+        "periodId": "string",
+        "date": "string",
+        "description": "string",
+        "category": "string",
+        "costPerItem": "number",
+        "quantity": "number",
+        "totalCost": "number",
+        "receiptBase64": "string",
+        "receiptName": "string",
+        "receiptType": "string",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    }
+  }
+}

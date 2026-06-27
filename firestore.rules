@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Match users collection
+    match /users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Match weeklyPeriods collection
+    match /weeklyPeriods/{periodId} {
+      allow read, write: if isAuthenticated();
+      
+      // Nested expenses inside a weekly period (or standard collection)
+      match /expenses/{expenseId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Match top-level expenses if stored there
+    match /expenses/{expenseId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

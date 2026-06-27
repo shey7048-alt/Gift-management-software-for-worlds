@@ -1,0 +1,6 @@
+{
+  "name": "Shai Olamot Expenses",
+  "description": "Weekly expense tracking, receipt management, and automated financial reporting with intelligent Gemini receipt scanning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
