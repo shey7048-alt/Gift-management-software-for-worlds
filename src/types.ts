@@ -25,26 +25,26 @@ export interface WeeklyPeriod {
 }
 
 export type ExpenseCategory = 
-  | 'Office Supplies'
-  | 'Travel & Transportation'
-  | 'Operational Cost'
-  | 'Events & Activities'
-  | 'Salaries & Benefits'
-  | 'Marketing & PR'
-  | 'Food & Catering'
-  | 'Maintenance & Repairs'
-  | 'Other';
+  | 'ציוד משרדי'
+  | 'נסיעות ותחבורה'
+  | 'עלויות תפעול'
+  | 'אירועים ופעילויות'
+  | 'שכר והטבות'
+  | 'שיווק ויחסי ציבור'
+  | 'מזון וכיבוד'
+  | 'תחזוקה ותיקונים'
+  | 'אחר';
 
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  'Office Supplies',
-  'Travel & Transportation',
-  'Operational Cost',
-  'Events & Activities',
-  'Salaries & Benefits',
-  'Marketing & PR',
-  'Food & Catering',
-  'Maintenance & Repairs',
-  'Other',
+  'ציוד משרדי',
+  'נסיעות ותחבורה',
+  'עלויות תפעול',
+  'אירועים ופעילויות',
+  'שכר והטבות',
+  'שיווק ויחסי ציבור',
+  'מזון וכיבוד',
+  'תחזוקה ותיקונים',
+  'אחר',
 ];
 
 export interface AppUser {

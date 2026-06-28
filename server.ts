@@ -62,23 +62,23 @@ app.post('/api/scan-receipt', async (req, res) => {
 Analyze this receipt image or document and extract the following expense details into a clean JSON object. 
 If details are unclear, make your best guess based on the receipt context.
 
-Choose the best fit category from this exact list:
-- Office Supplies
-- Travel & Transportation
-- Operational Cost
-- Events & Activities
-- Salaries & Benefits
-- Marketing & PR
-- Food & Catering
-- Maintenance & Repairs
-- Other
+Choose the best fit category from this exact list in Hebrew:
+- ציוד משרדי
+- נסיעות ותחבורה
+- עלויות תפעול
+- אירועים ופעילויות
+- שכר והטבות
+- שיווק ויחסי ציבור
+- מזון וכיבוד
+- תחזוקה ותיקונים
+- אחר
 
 The output MUST be a valid JSON block and nothing else. No markdown wrappers like \`\`\`json. Just the raw JSON object.
 Format:
 {
   "date": "YYYY-MM-DD",
-  "description": "Merchant Name or brief description of items purchased",
-  "category": "Office Supplies | Travel & Transportation | Operational Cost | Events & Activities | Salaries & Benefits | Marketing & PR | Food & Catering | Maintenance & Repairs | Other",
+  "description": "Merchant Name or brief description of items purchased (translate to Hebrew if possible, e.g. 'תדלוק סונול' or 'רכישת ציוד משרדי קרביץ')",
+  "category": "ציוד משרדי | נסיעות ותחבורה | עלויות תפעול | אירועים ופעילויות | שכר והטבות | שיווק ויחסי ציבור | מזון וכיבוד | תחזוקה ותיקונים | אחר",
   "costPerItem": 12.34,
   "quantity": 1,
   "totalCost": 12.34

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Loader2, Sparkles } from 'lucide-react';
-import { auth, signInWithEmailAndPassword, isFirebaseAvailable } from '../firebase';
+import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, isFirebaseAvailable } from '../firebase';
 import Logo from './Logo';
 import { BrandConfig } from '../types';
 
@@ -34,14 +34,44 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
     const targetPassword = brandConfig.adminPassword || '1234';
 
     if (inputEmail === targetEmail && inputPassword === targetPassword) {
-      setTimeout(() => {
-        onLoginSuccess({
-          uid: 'admin-uid',
-          email: targetEmail,
-          displayName: brandConfig.orgName || 'עולמות',
-        });
-        setLoading(false);
-      }, 500);
+      if (isFirebaseAvailable && auth) {
+        try {
+          // Attempt to authenticate the custom admin in Firebase Auth as well
+          let userCredential = null;
+          try {
+            userCredential = await signInWithEmailAndPassword(auth, inputEmail, inputPassword);
+          } catch (signInErr: any) {
+            // If the user doesn't exist in Firebase Auth yet, auto-create it
+            if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
+              try {
+                userCredential = await createUserWithEmailAndPassword(auth, inputEmail, inputPassword);
+              } catch (createErr) {
+                console.warn("Could not auto-create Firebase Auth user:", createErr);
+              }
+            } else {
+              console.warn("Could not sign in Firebase Auth user:", signInErr);
+            }
+          }
+
+          onLoginSuccess({
+            uid: userCredential?.user.uid || 'admin-uid',
+            email: targetEmail,
+            displayName: brandConfig.orgName || 'עולמות',
+          });
+          setLoading(false);
+          return;
+        } catch (fbErr) {
+          console.error("Firebase Auth fallback error:", fbErr);
+        }
+      }
+
+      // Offline/Fallback login success
+      onLoginSuccess({
+        uid: 'admin-uid',
+        email: targetEmail,
+        displayName: brandConfig.orgName || 'עולמות',
+      });
+      setLoading(false);
       return;
     }
 
@@ -61,10 +91,10 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
       console.error(err);
       if (err.code === 'auth/operation-not-allowed') {
         setError("שגיאת התחברות: פרטי הגישה שהזנת אינם נכונים.");
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
         setError("אימייל או סיסמה שגויים. אנא נסה שוב.");
       } else {
-        setError("ארעה שגיאה בחיבור לשרת. אנא ודא שפרטי הגישה נכונים.");
+        setError("אירעה שגיאה בחיבור לשרת. אנא ודא שפרטי הגישה נכונים.");
       }
     } finally {
       setLoading(false);
@@ -174,7 +204,7 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
 
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-400 font-medium">
-            מערכת ניהול הוצאות מורשת &bull; כל הפעולות מבוקרות ומאובטחות
+            מערכת ניהול הוצאות רשמית ומאובטחת &bull; כל הפעולות מבוקרות
           </p>
         </div>
       </div>

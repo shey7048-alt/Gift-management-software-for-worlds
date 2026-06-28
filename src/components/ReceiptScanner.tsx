@@ -80,7 +80,7 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
           onScanComplete({
             date: result.data.date || new Date().toISOString().split('T')[0],
             description: result.data.description || file.name.split('.')[0],
-            category: result.data.category || 'Other',
+            category: result.data.category || 'אחר',
             costPerItem: parseFloat(result.data.costPerItem) || 0,
             quantity: parseInt(result.data.quantity) || 1,
             totalCost: parseFloat(result.data.totalCost) || parseFloat(result.data.costPerItem) || 0,

@@ -14,7 +14,7 @@ interface ExpenseModalProps {
 export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, weekLabel }: ExpenseModalProps) {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Other');
+  const [category, setCategory] = useState('אחר');
   const [costPerItem, setCostPerItem] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [totalCost, setTotalCost] = useState(0);
@@ -40,7 +40,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
     } else {
       setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
-      setCategory('Other');
+      setCategory('אחר');
       setCostPerItem(0);
       setQuantity(1);
       setTotalCost(0);

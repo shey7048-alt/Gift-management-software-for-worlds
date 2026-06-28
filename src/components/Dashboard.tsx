@@ -514,7 +514,7 @@ export default function Dashboard({
                                 <button
                                   type="button"
                                   onClick={() => setViewingReceipt({
-                                    name: exp.receiptName || 'Attached Receipt',
+                                    name: exp.receiptName || 'קבלה מצורפת',
                                     base64: exp.receiptBase64!,
                                     type: exp.receiptType || 'image/jpeg'
                                   })}
@@ -527,104 +527,104 @@ export default function Dashboard({
                                 <span className="text-slate-400 italic">אין קובץ</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-left text-xs font-semibold space-x-1.5">
-                              <button
-                                onClick={() => onEditExpense(selectedPeriod.id, exp)}
-                                className="text-slate-500 hover:text-slate-800 p-1.5 hover:bg-slate-100 rounded-lg transition-colors inline-flex"
-                                title="ערוך הוצאה"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (window.confirm("האם אתה בטוח שברצונך למחוק הוצאה זו?")) {
-                                    onDeleteExpense(selectedPeriod.id, exp.id);
-                                  }
-                                }}
-                                className="text-rose-500 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors inline-flex"
-                                title="מחק הוצאה"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-left text-xs font-semibold space-x-1.5">
+                            <button
+                              onClick={() => onEditExpense(selectedPeriod.id, exp)}
+                              className="text-slate-500 hover:text-slate-800 p-1.5 hover:bg-slate-100 rounded-lg transition-colors inline-flex"
+                              title="ערוך הוצאה"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm("האם אתה בטוח שברצונך למחוק הוצאה זו?")) {
+                                  onDeleteExpense(selectedPeriod.id, exp.id);
+                                }
+                              }}
+                              className="text-rose-500 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors inline-flex"
+                              title="מחק הוצאה"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white p-12 rounded-3xl border border-slate-100 shadow-sm text-center space-y-4">
-              <FolderOpen className="h-12 w-12 text-slate-300 mx-auto" />
-              <div>
-                <h3 className="font-extrabold text-slate-800 text-lg">לא נבחר דיווח</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  בחר יומן דיווח מרשימת הדיווחים מימין כדי להציג את ההוצאות שלו, או פתח דיווח חדש לגמרי.
-                </p>
               </div>
-              <button
-                onClick={onAddPeriod}
-                className="bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-100"
-              >
-                פתח דיווח ראשון
-              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white p-12 rounded-3xl border border-slate-100 shadow-sm text-center space-y-4">
+            <FolderOpen className="h-12 w-12 text-slate-300 mx-auto" />
+            <div>
+              <h3 className="font-extrabold text-slate-800 text-lg">לא נבחר דיווח</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                בחר יומן דיווח מרשימת הדיווחים מימין כדי להציג את ההוצאות שלו, או פתח דיווח חדש לגמרי.
+              </p>
             </div>
-          )}
-        </div>
+            <button
+              onClick={onAddPeriod}
+              className="bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-100"
+            >
+              פתח דיווח ראשון
+            </button>
+          </div>
+        )}
       </div>
+    </div>
 
-      {/* Viewing Receipt Image Modal */}
-      {viewingReceipt && (
-        <div id="receipt-preview-backdrop" className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs" dir="rtl">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-xl border border-slate-100 relative space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-              <h4 className="font-bold text-slate-800 truncate pr-4">{viewingReceipt.name}</h4>
-              <button 
-                onClick={() => setViewingReceipt(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-full mr-auto ml-0"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+    {/* Viewing Receipt Image Modal */}
+    {viewingReceipt && (
+      <div id="receipt-preview-backdrop" className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs" dir="rtl">
+        <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-xl border border-slate-100 relative space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+            <h4 className="font-bold text-slate-800 truncate pr-4">{viewingReceipt.name}</h4>
+            <button 
+              onClick={() => setViewingReceipt(null)}
+              className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-full mr-auto ml-0"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-            <div className="flex justify-center max-h-[70vh] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-2">
-              {viewingReceipt.type.startsWith('image/') ? (
-                <img 
-                  src={viewingReceipt.base64} 
-                  alt="Receipt" 
-                  className="max-h-[60vh] object-contain rounded-xl"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="p-12 text-center space-y-3 text-slate-400">
-                  <FileText className="h-16 w-16 mx-auto" />
-                  <p className="text-sm font-semibold">{viewingReceipt.name}</p>
-                  <p className="text-xs">מסמך דיגיטלי (קובץ Base64)</p>
-                  <a 
-                    href={viewingReceipt.base64} 
-                    download={viewingReceipt.name}
-                    className="inline-flex bg-blue-900 hover:bg-blue-950 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                  >
-                    הורד קובץ
-                  </a>
-                </div>
-              )}
-            </div>
+          <div className="flex justify-center max-h-[70vh] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-2">
+            {viewingReceipt.type.startsWith('image/') ? (
+              <img 
+                src={viewingReceipt.base64} 
+                alt="Receipt" 
+                className="max-h-[60vh] object-contain rounded-xl"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="p-12 text-center space-y-3 text-slate-400">
+                <FileText className="h-16 w-16 mx-auto" />
+                <p className="text-sm font-semibold">{viewingReceipt.name}</p>
+                <p className="text-xs">מסמך דיגיטלי (קובץ Base64)</p>
+                <a 
+                  href={viewingReceipt.base64} 
+                  download={viewingReceipt.name}
+                  className="inline-flex bg-blue-900 hover:bg-blue-950 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                >
+                  הורד קובץ
+                </a>
+              </div>
+            )}
+          </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setViewingReceipt(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
-              >
-                סגור תצוגה מקדימה
-              </button>
-            </div>
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setViewingReceipt(null)}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+            >
+              סגור תצוגה מקדימה
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }
