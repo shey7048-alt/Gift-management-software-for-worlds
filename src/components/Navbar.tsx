@@ -22,7 +22,7 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
                 {brandConfig.orgName}
               </h1>
-              <p className="text-xs text-slate-500 font-medium">ניהול הוצאות שי עולמות</p>
+              <p className="text-xs text-slate-500 font-medium">ניהול הוצאות עולמות</p>
             </div>
           </div>
 
@@ -42,7 +42,7 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               {/* Brand Settings Trigger */}
               <button
                 onClick={onEditBrand}
-                title="הגדרות מיתוג ולוגו"
+                title="שינוי סיסמת מנהל"
                 className="p-2 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 text-slate-500 rounded-xl transition-all duration-150"
               >
                 <Settings className="h-4 w-4" />

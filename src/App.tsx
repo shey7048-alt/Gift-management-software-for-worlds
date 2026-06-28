@@ -17,20 +17,22 @@ import { Building, Sparkles } from 'lucide-react';
 const SEED_PERIODS: WeeklyPeriod[] = [
   {
     id: 'period-2026-w26',
-    weekLabel: 'Week of Jun 21 - Jun 27, 2026',
-    startDate: '2026-06-21',
-    endDate: '2026-06-27',
+    weekLabel: 'דיווח לתאריך 24.06.2026',
+    date: '2026-06-24',
+    startDate: '2026-06-24',
+    endDate: '2026-06-24',
     status: 'active',
-    notes: 'Summertime operational log and community setup expenses.',
+    notes: 'הוצאות שוטפות ורכישת ציוד משרדי.',
     createdAt: new Date().toISOString()
   },
   {
     id: 'period-2026-w25',
-    weekLabel: 'Week of Jun 14 - Jun 20, 2026',
-    startDate: '2026-06-14',
-    endDate: '2026-06-20',
+    weekLabel: 'דיווח לתאריך 15.06.2026',
+    date: '2026-06-15',
+    startDate: '2026-06-15',
+    endDate: '2026-06-15',
     status: 'archived',
-    notes: 'Organizational training weekend expenses.',
+    notes: 'אירוע הדרכה ואירוח מרצים.',
     createdAt: new Date().toISOString()
   }
 ];
@@ -109,7 +111,7 @@ export default function App() {
   // Brand config state
   const [brandConfig, setBrandConfig] = useState<BrandConfig>({
     logoUrl: localStorage.getItem('shai_olamot_logo_url') || 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
-    orgName: localStorage.getItem('shai_olamot_org_name') || 'שי עולמות',
+    orgName: localStorage.getItem('shai_olamot_org_name') || 'עולמות',
     adminEmail: 'shey7048@gmail.com',
     adminPassword: '1234'
   });
@@ -137,11 +139,11 @@ export default function App() {
             } else {
               localStorage.removeItem('shai_olamot_logo_url');
             }
-            localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
+            localStorage.setItem('shai_olamot_org_name', data.orgName || 'עולמות');
           } else {
             // Document does not exist yet. Seed/Initialize the brand settings document!
             const initialBrand: BrandConfig = {
-              orgName: 'שי עולמות',
+              orgName: 'עולמות',
               logoUrl: 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
               adminEmail: 'shey7048@gmail.com',
               adminPassword: '1234'
@@ -161,6 +163,9 @@ export default function App() {
 
   // Authenticate monitor
   useEffect(() => {
+    const cachedUser = localStorage.getItem('shai_olamot_cached_user');
+    const parsedCachedUser = cachedUser ? JSON.parse(cachedUser) : null;
+
     if (isFirebaseAvailable && auth) {
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
@@ -170,16 +175,19 @@ export default function App() {
             displayName: firebaseUser.displayName || undefined,
           });
         } else {
-          setUser(null);
+          if (parsedCachedUser && parsedCachedUser.uid === 'admin-uid') {
+            setUser(parsedCachedUser);
+          } else {
+            setUser(null);
+          }
         }
         setAuthLoading(false);
       });
       return unsubscribe;
     } else {
       // Offline fallback checks
-      const cachedUser = localStorage.getItem('shai_olamot_cached_user');
-      if (cachedUser) {
-        setUser(JSON.parse(cachedUser));
+      if (parsedCachedUser) {
+        setUser(parsedCachedUser);
       }
       setAuthLoading(false);
     }
@@ -204,7 +212,12 @@ export default function App() {
           
           let loadedPeriods: WeeklyPeriod[] = [];
           periodsSnap.forEach((docSnap) => {
-            loadedPeriods.push({ id: docSnap.id, ...docSnap.data() } as WeeklyPeriod);
+            const data = docSnap.data();
+            loadedPeriods.push({ 
+              id: docSnap.id, 
+              ...data,
+              date: data.date || data.startDate || '2026-06-24'
+            } as WeeklyPeriod);
           });
 
           // Load Expenses
@@ -257,7 +270,7 @@ export default function App() {
               } else {
                 localStorage.removeItem('shai_olamot_logo_url');
               }
-              localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
+              localStorage.setItem('shai_olamot_org_name', data.orgName || 'עולמות');
             }
           } catch (brandError) {
             console.error("Error loading brand config:", brandError);
@@ -269,7 +282,11 @@ export default function App() {
           const cachedExpenses = localStorage.getItem('shai_olamot_expenses');
 
           if (cachedPeriods && cachedExpenses) {
-            setPeriods(JSON.parse(cachedPeriods));
+            const parsedPeriods = JSON.parse(cachedPeriods).map((p: any) => ({
+              ...p,
+              date: p.date || p.startDate || '2026-06-24'
+            }));
+            setPeriods(parsedPeriods);
             setExpenses(JSON.parse(cachedExpenses));
           } else {
             // Seed localStorage
@@ -326,8 +343,9 @@ export default function App() {
     const newPeriod: WeeklyPeriod = {
       id,
       weekLabel: periodData.weekLabel,
-      startDate: periodData.startDate,
-      endDate: periodData.endDate,
+      date: periodData.date,
+      startDate: periodData.date,
+      endDate: periodData.date,
       status: periodData.status,
       notes: periodData.notes,
       createdAt: editingPeriod ? editingPeriod.createdAt : new Date().toISOString()

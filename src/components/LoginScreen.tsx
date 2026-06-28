@@ -38,7 +38,7 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
         onLoginSuccess({
           uid: 'admin-uid',
           email: targetEmail,
-          displayName: brandConfig.orgName || 'שי עולמות',
+          displayName: brandConfig.orgName || 'עולמות',
         });
         setLoading(false);
       }, 500);
@@ -77,7 +77,7 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
         <div className="flex flex-col justify-center items-center gap-4 mb-4">
           <Logo brandConfig={brandConfig} className="h-24 w-24 shadow-xl shadow-blue-100/50 border border-slate-100 rounded-2xl" iconClassName="h-12 w-12" />
           <h1 className="text-3xl font-black tracking-tight text-slate-950 font-sans">
-            {brandConfig.orgName || 'שי עולמות'}
+            {brandConfig.orgName || 'עולמות'}
           </h1>
         </div>
         <h2 className="text-lg font-bold tracking-tight text-slate-700">

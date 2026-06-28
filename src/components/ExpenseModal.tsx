@@ -384,7 +384,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
           
           <div className="hidden md:block pt-6 border-t border-slate-100">
             <span className="text-[10px] text-slate-400 font-semibold tracking-wider block">
-              מערכת ניהול תקציבית - שי עולמות
+              מערכת ניהול תקציבית - עולמות
             </span>
           </div>
         </div>

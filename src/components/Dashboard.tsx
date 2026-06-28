@@ -40,9 +40,33 @@ export default function Dashboard({
 
   // Filter periods based on tab
   const filteredPeriods = useMemo(() => {
+    const isDateInCurrentWeek = (dateStr: string) => {
+      const today = new Date();
+      const currentSunday = new Date(today);
+      currentSunday.setDate(today.getDate() - today.getDay());
+      currentSunday.setHours(0, 0, 0, 0);
+      
+      const currentSaturday = new Date(currentSunday);
+      currentSaturday.setDate(currentSunday.getDate() + 6);
+      currentSaturday.setHours(23, 59, 59, 999);
+      
+      const targetDate = new Date(dateStr);
+      targetDate.setHours(12, 0, 0, 0);
+      
+      return targetDate >= currentSunday && targetDate <= currentSaturday;
+    };
+
     return periods
-      .filter(p => p.status === activeTab)
-      .sort((a, b) => b.startDate.localeCompare(a.startDate));
+      .filter(p => {
+        const pDate = p.date || p.startDate || '2026-06-24';
+        const inCurrentWeek = isDateInCurrentWeek(pDate);
+        return activeTab === 'active' ? inCurrentWeek : !inCurrentWeek;
+      })
+      .sort((a, b) => {
+        const dateA = a.date || a.startDate || '';
+        const dateB = b.date || b.startDate || '';
+        return dateB.localeCompare(dateA);
+      });
   }, [periods, activeTab]);
 
   // If no period is selected, default to the most recent filtered period (if exists)
@@ -128,15 +152,7 @@ export default function Dashboard({
   return (
     <div id="dashboard-root" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" dir="rtl">
       {/* Overview Cards */}
-      <section id="metrics-bento" className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <StatCard 
-          id="stat-all-time"
-          title="סה״כ הוצאות בארגון"
-          value={`₪${stats.totalAllTime.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subtitle="הוצאות מצטברות של שי עולמות"
-          icon={DollarSign}
-          colorClass="text-blue-900 bg-blue-50"
-        />
+      <section id="metrics-bento" className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <StatCard 
           id="stat-this-year"
           title="הוצאות שנתיות"
@@ -155,9 +171,9 @@ export default function Dashboard({
         />
         <StatCard 
           id="stat-active-week"
-          title="סה״כ שבוע נבחר"
+          title="סה״כ דיווח נבחר"
           value={`₪${stats.activePeriodTotal.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subtitle={selectedPeriod ? selectedPeriod.weekLabel : "לא נבחר שבוע"}
+          subtitle={selectedPeriod ? selectedPeriod.weekLabel : "לא נבחר דיווח"}
           icon={Clock}
           colorClass="text-slate-800 bg-slate-100"
         />
@@ -171,7 +187,7 @@ export default function Dashboard({
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 <FolderOpen className="h-5 w-5 text-blue-900" />
-                <span>יומנים שבועיים</span>
+                <span>יומני דיווח</span>
               </h3>
               <button
                 id="btn-add-period"
@@ -179,7 +195,7 @@ export default function Dashboard({
                 className="inline-flex items-center gap-1 bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all duration-150 shadow-md shadow-blue-100"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>שבוע חדש</span>
+                <span>דיווח חדש</span>
               </button>
             </div>
 
@@ -218,8 +234,8 @@ export default function Dashboard({
               {filteredPeriods.length === 0 ? (
                 <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-slate-600">לא נמצאו שבועות דיווח</p>
-                  <p className="text-[10px] text-slate-400 mt-1">לחץ על 'שבוע חדש' למעלה כדי להתחיל</p>
+                  <p className="text-xs font-semibold text-slate-600">לא נמצאו יומני דיווח</p>
+                  <p className="text-[10px] text-slate-400 mt-1">לחץ על 'דיווח חדש' למעלה כדי להתחיל</p>
                 </div>
               ) : (
                 filteredPeriods.map(p => {
@@ -242,7 +258,7 @@ export default function Dashboard({
                           {p.weekLabel}
                         </p>
                         <p className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'} font-medium`}>
-                          {p.startDate} &larr; {p.endDate}
+                          תאריך דיווח: {p.date || p.startDate}
                         </p>
                         <div className="flex gap-2 pt-1">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
@@ -275,7 +291,7 @@ export default function Dashboard({
             <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
               <h4 className="font-bold text-slate-800 flex items-center gap-2">
                 <PieChart className="h-5 w-5 text-blue-900" />
-                <span>פילוח קטגוריות שבועי</span>
+                <span>פילוח קטגוריות לדיווח</span>
               </h4>
 
               <div className="space-y-3">
@@ -316,7 +332,7 @@ export default function Dashboard({
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 font-medium mt-1">
-                    תאריכי דיווח: {selectedPeriod.startDate} עד {selectedPeriod.endDate}
+                    תאריך דיווח: {selectedPeriod.date || selectedPeriod.startDate}
                   </p>
                   {selectedPeriod.notes && (
                     <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100/50 mt-2 max-w-xl">
@@ -331,33 +347,12 @@ export default function Dashboard({
                     className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 transition-all duration-150"
                   >
                     <Edit className="h-3.5 w-3.5" />
-                    <span>עריכת שבוע</span>
-                  </button>
-
-                  <button
-                    onClick={() => onArchivePeriod(selectedPeriod.id, selectedPeriod.status === 'active' ? 'archived' : 'active')}
-                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-xl border transition-all duration-150 ${
-                      selectedPeriod.status === 'active'
-                        ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200'
-                        : 'text-blue-900 bg-blue-50 hover:bg-blue-100 border-blue-200'
-                    }`}
-                  >
-                    {selectedPeriod.status === 'active' ? (
-                      <>
-                        <Archive className="h-3.5 w-3.5" />
-                        <span>העבר לארכיון</span>
-                      </>
-                    ) : (
-                      <>
-                        <ArchiveRestore className="h-3.5 w-3.5" />
-                        <span>החזר לפעיל</span>
-                      </>
-                    )}
+                    <span>עריכת דיווח</span>
                   </button>
 
                   <button
                     onClick={() => {
-                      if (window.confirm("האם אתה בטוח שברצונך למחוק את שבוע הדיווח הזה לחלוטין? כל ההוצאות המשויכות אליו יימחקו.")) {
+                      if (window.confirm("האם אתה בטוח שברצונך למחוק את הדיווח הזה לחלוטין? כל ההוצאות המשויכות אליו יימחקו.")) {
                         onDeletePeriod(selectedPeriod.id);
                         setSelectedPeriodId(null);
                       }
@@ -415,7 +410,7 @@ export default function Dashboard({
                   <div>
                     <h5 className="font-bold text-slate-700">אין הוצאות מתועדות</h5>
                     <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-                      לא נמצאו הוצאות התואמות את החיפוש או הסינון שלך בשבוע זה.
+                      לא נמצאו הוצאות התואמות את החיפוש או הסינון שלך בדיווח זה.
                     </p>
                   </div>
                   <button
@@ -516,16 +511,16 @@ export default function Dashboard({
             <div className="bg-white p-12 rounded-3xl border border-slate-100 shadow-sm text-center space-y-4">
               <FolderOpen className="h-12 w-12 text-slate-300 mx-auto" />
               <div>
-                <h3 className="font-extrabold text-slate-800 text-lg">לא נבחר שבוע דיווח</h3>
+                <h3 className="font-extrabold text-slate-800 text-lg">לא נבחר דיווח</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  בחר שבוע דיווח מתוך רשימת היומנים בימין כדי להציג את ההוצאות שלו, או פתח שבוע חדש לגמרי.
+                  בחר יומן דיווח מרשימת הדיווחים מימין כדי להציג את ההוצאות שלו, או פתח דיווח חדש לגמרי.
                 </p>
               </div>
               <button
                 onClick={onAddPeriod}
                 className="bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-100"
               >
-                פתח שבוע דיווח ראשון
+                פתח דיווח ראשון
               </button>
             </div>
           )}
