@@ -103,10 +103,35 @@ export default function App() {
   const [user, setUser] = useState<{ uid: string; email: string; displayName?: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Core records state
-  const [periods, setPeriods] = useState<WeeklyPeriod[]>([]);
-  const [expenses, setExpenses] = useState<{ [periodId: string]: Expense[] }>({});
+  // Core records state (loaded instantly from cache with background Firestore sync)
+  const [periods, setPeriods] = useState<WeeklyPeriod[]>(() => {
+    const cached = localStorage.getItem('shai_olamot_periods');
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [expenses, setExpenses] = useState<{ [periodId: string]: Expense[] }>(() => {
+    const cached = localStorage.getItem('shai_olamot_expenses');
+    return cached ? JSON.parse(cached) : {};
+  });
   const [dbLoading, setDbLoading] = useState(false);
+
+  // Helper to dynamically calculate active vs archived status for all periods
+  const getPeriodsWithCalculatedStatus = (allPeriods: WeeklyPeriod[]): WeeklyPeriod[] => {
+    if (allPeriods.length === 0) return [];
+    
+    // Sort all periods by date descending (latest date first)
+    const sorted = [...allPeriods].sort((a, b) => {
+      const dateA = a.date || a.startDate || '';
+      const dateB = b.date || b.startDate || '';
+      return dateB.localeCompare(dateA);
+    });
+    
+    const latestId = sorted[0].id;
+    
+    return allPeriods.map(p => ({
+      ...p,
+      status: p.id === latestId ? 'active' : 'archived' as 'active' | 'archived'
+    }));
+  };
 
   // Brand config state
   const [brandConfig, setBrandConfig] = useState<BrandConfig>({
@@ -240,23 +265,32 @@ export default function App() {
           if (loadedPeriods.length === 0) {
             console.log("Firestore database is empty. Seeding initial records...");
             
+            const processedSeeds = getPeriodsWithCalculatedStatus(SEED_PERIODS);
+            
             // Write seed periods
-            for (const p of SEED_PERIODS) {
-              await setDoc(doc(db, 'weeklyPeriods', p.id), p);
+            for (const p of processedSeeds) {
+              const cleaned = JSON.parse(JSON.stringify(p));
+              await setDoc(doc(db, 'weeklyPeriods', p.id), cleaned);
             }
 
             // Write seed expenses
             for (const [periodId, expList] of Object.entries(SEED_EXPENSES)) {
               for (const e of expList) {
-                await setDoc(doc(db, 'expenses', e.id), { ...e, periodId });
+                const cleaned = JSON.parse(JSON.stringify({ ...e, periodId }));
+                await setDoc(doc(db, 'expenses', e.id), cleaned);
               }
             }
 
-            setPeriods(SEED_PERIODS);
+            setPeriods(processedSeeds);
             setExpenses(SEED_EXPENSES);
+            localStorage.setItem('shai_olamot_periods', JSON.stringify(processedSeeds));
+            localStorage.setItem('shai_olamot_expenses', JSON.stringify(SEED_EXPENSES));
           } else {
-            setPeriods(loadedPeriods);
+            const processedPeriods = getPeriodsWithCalculatedStatus(loadedPeriods);
+            setPeriods(processedPeriods);
             setExpenses(loadedExpenses);
+            localStorage.setItem('shai_olamot_periods', JSON.stringify(processedPeriods));
+            localStorage.setItem('shai_olamot_expenses', JSON.stringify(loadedExpenses));
           }
 
           // Load Brand Config
@@ -286,13 +320,14 @@ export default function App() {
               ...p,
               date: p.date || p.startDate || '2026-06-24'
             }));
-            setPeriods(parsedPeriods);
+            const processedPeriods = getPeriodsWithCalculatedStatus(parsedPeriods);
+            setPeriods(processedPeriods);
             setExpenses(JSON.parse(cachedExpenses));
           } else {
-            // Seed localStorage
-            localStorage.setItem('shai_olamot_periods', JSON.stringify(SEED_PERIODS));
+            const processedSeeds = getPeriodsWithCalculatedStatus(SEED_PERIODS);
+            localStorage.setItem('shai_olamot_periods', JSON.stringify(processedSeeds));
             localStorage.setItem('shai_olamot_expenses', JSON.stringify(SEED_EXPENSES));
-            setPeriods(SEED_PERIODS);
+            setPeriods(processedSeeds);
             setExpenses(SEED_EXPENSES);
           }
         }
@@ -351,52 +386,79 @@ export default function App() {
       createdAt: editingPeriod ? editingPeriod.createdAt : new Date().toISOString()
     };
 
-    const updatedPeriods = editingPeriod
+    const rawUpdatedPeriods = editingPeriod
       ? periods.map(p => p.id === id ? newPeriod : p)
       : [...periods, newPeriod];
 
-    setPeriods(updatedPeriods);
+    const processedPeriods = getPeriodsWithCalculatedStatus(rawUpdatedPeriods);
+    setPeriods(processedPeriods);
 
-    // Persist
+    // Save to localStorage
+    localStorage.setItem('shai_olamot_periods', JSON.stringify(processedPeriods));
+
+    // Persist to Firestore
     if (isFirebaseAvailable && db) {
-      await setDoc(doc(db, 'weeklyPeriods', id), newPeriod);
-    } else {
-      localStorage.setItem('shai_olamot_periods', JSON.stringify(updatedPeriods));
+      try {
+        for (const p of processedPeriods) {
+          // Clean undefined fields to avoid Firestore errors
+          const cleaned = JSON.parse(JSON.stringify(p));
+          await setDoc(doc(db, 'weeklyPeriods', p.id), cleaned);
+        }
+      } catch (err) {
+        console.error("Failed to save periods to Firestore:", err);
+      }
     }
 
     setEditingPeriod(null);
   };
 
   const handleDeletePeriod = async (periodId: string) => {
-    const updatedPeriods = periods.filter(p => p.id !== periodId);
-    setPeriods(updatedPeriods);
+    const rawUpdatedPeriods = periods.filter(p => p.id !== periodId);
+    const processedPeriods = getPeriodsWithCalculatedStatus(rawUpdatedPeriods);
+    setPeriods(processedPeriods);
 
     const updatedExpenses = { ...expenses };
     const expensesToDelete = updatedExpenses[periodId] || [];
     delete updatedExpenses[periodId];
     setExpenses(updatedExpenses);
 
-    // Persist
+    // Save to localStorage
+    localStorage.setItem('shai_olamot_periods', JSON.stringify(processedPeriods));
+    localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
+
+    // Persist to Firestore
     if (isFirebaseAvailable && db) {
-      await deleteDoc(doc(db, 'weeklyPeriods', periodId));
-      for (const exp of expensesToDelete) {
-        await deleteDoc(doc(db, 'expenses', exp.id));
+      try {
+        await deleteDoc(doc(db, 'weeklyPeriods', periodId));
+        for (const exp of expensesToDelete) {
+          await deleteDoc(doc(db, 'expenses', exp.id));
+        }
+        for (const p of processedPeriods) {
+          const cleaned = JSON.parse(JSON.stringify(p));
+          await setDoc(doc(db, 'weeklyPeriods', p.id), cleaned);
+        }
+      } catch (err) {
+        console.error("Failed to delete period or update statuses in Firestore:", err);
       }
-    } else {
-      localStorage.setItem('shai_olamot_periods', JSON.stringify(updatedPeriods));
-      localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
     }
   };
 
   const handleArchivePeriod = async (periodId: string, status: 'active' | 'archived') => {
     const updatedPeriods = periods.map(p => p.id === periodId ? { ...p, status } : p);
-    setPeriods(updatedPeriods);
+    const processedPeriods = getPeriodsWithCalculatedStatus(updatedPeriods);
+    setPeriods(processedPeriods);
 
-    // Persist
+    localStorage.setItem('shai_olamot_periods', JSON.stringify(processedPeriods));
+
     if (isFirebaseAvailable && db) {
-      await updateDoc(doc(db, 'weeklyPeriods', periodId), { status });
-    } else {
-      localStorage.setItem('shai_olamot_periods', JSON.stringify(updatedPeriods));
+      try {
+        for (const p of processedPeriods) {
+          const cleaned = JSON.parse(JSON.stringify(p));
+          await setDoc(doc(db, 'weeklyPeriods', p.id), cleaned);
+        }
+      } catch (err) {
+        console.error("Failed to update periods status in Firestore:", err);
+      }
     }
   };
 
@@ -432,14 +494,20 @@ export default function App() {
 
     setExpenses(updatedExpenses);
 
-    // Persist
+    // Save to localStorage
+    localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
+
+    // Persist to Firestore
     if (isFirebaseAvailable && db) {
-      await setDoc(doc(db, 'expenses', id), { 
-        ...newExpense, 
-        periodId: selectedPeriodForExpense 
-      });
-    } else {
-      localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
+      try {
+        const cleaned = JSON.parse(JSON.stringify({ 
+          ...newExpense, 
+          periodId: selectedPeriodForExpense 
+        }));
+        await setDoc(doc(db, 'expenses', id), cleaned);
+      } catch (err) {
+        console.error("Failed to save expense to Firestore:", err);
+      }
     }
 
     setEditingExpense(null);
@@ -457,11 +525,16 @@ export default function App() {
 
     setExpenses(updatedExpenses);
 
-    // Persist
+    // Save to localStorage
+    localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
+
+    // Persist to Firestore
     if (isFirebaseAvailable && db) {
-      await deleteDoc(doc(db, 'expenses', expenseId));
-    } else {
-      localStorage.setItem('shai_olamot_expenses', JSON.stringify(updatedExpenses));
+      try {
+        await deleteDoc(doc(db, 'expenses', expenseId));
+      } catch (err) {
+        console.error("Failed to delete expense from Firestore:", err);
+      }
     }
   };
 

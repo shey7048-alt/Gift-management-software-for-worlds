@@ -38,29 +38,23 @@ export default function Dashboard({
   // Modal states for receipt previewing
   const [viewingReceipt, setViewingReceipt] = useState<{ name: string; base64: string; type: string } | null>(null);
 
-  // Filter periods based on tab
+  // Filter periods based on tab (Newest period is active, all others are archived)
   const filteredPeriods = useMemo(() => {
-    const isDateInCurrentWeek = (dateStr: string) => {
-      const today = new Date();
-      const currentSunday = new Date(today);
-      currentSunday.setDate(today.getDate() - today.getDay());
-      currentSunday.setHours(0, 0, 0, 0);
-      
-      const currentSaturday = new Date(currentSunday);
-      currentSaturday.setDate(currentSunday.getDate() + 6);
-      currentSaturday.setHours(23, 59, 59, 999);
-      
-      const targetDate = new Date(dateStr);
-      targetDate.setHours(12, 0, 0, 0);
-      
-      return targetDate >= currentSunday && targetDate <= currentSaturday;
-    };
+    if (periods.length === 0) return [];
+
+    // Sort all periods by date descending (latest date first)
+    const sortedAllPeriods = [...periods].sort((a, b) => {
+      const dateA = a.date || a.startDate || '';
+      const dateB = b.date || b.startDate || '';
+      return dateB.localeCompare(dateA);
+    });
+
+    const newestPeriodId = sortedAllPeriods[0]?.id;
 
     return periods
       .filter(p => {
-        const pDate = p.date || p.startDate || '2026-06-24';
-        const inCurrentWeek = isDateInCurrentWeek(pDate);
-        return activeTab === 'active' ? inCurrentWeek : !inCurrentWeek;
+        const isActive = p.id === newestPeriodId;
+        return activeTab === 'active' ? isActive : !isActive;
       })
       .sort((a, b) => {
         const dateA = a.date || a.startDate || '';
@@ -69,10 +63,50 @@ export default function Dashboard({
       });
   }, [periods, activeTab]);
 
-  // If no period is selected, default to the most recent filtered period (if exists)
+  // Group filtered periods by Month and Year in Hebrew
+  const groupedPeriods = useMemo(() => {
+    const groups: { [key: string]: WeeklyPeriod[] } = {};
+    
+    filteredPeriods.forEach(p => {
+      const pDate = p.date || p.startDate || '2026-06-24';
+      const dateObj = new Date(pDate);
+      if (isNaN(dateObj.getTime())) {
+        const key = 'אחר';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(p);
+        return;
+      }
+      
+      const monthLabel = dateObj.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+      if (!groups[monthLabel]) {
+        groups[monthLabel] = [];
+      }
+      groups[monthLabel].push(p);
+    });
+    
+    return groups;
+  }, [filteredPeriods]);
+
+  // Sort group keys chronologically (newest first)
+  const sortedGroupKeys = useMemo(() => {
+    return Object.keys(groupedPeriods).sort((a, b) => {
+      const pA = groupedPeriods[a][0];
+      const pB = groupedPeriods[b][0];
+      const dateA = pA.date || pA.startDate || '';
+      const dateB = pB.date || pB.startDate || '';
+      return dateB.localeCompare(dateA);
+    });
+  }, [groupedPeriods]);
+
+  // If no period is selected or current selection is not in filtered list, select the most recent one
   React.useEffect(() => {
-    if (!selectedPeriodId && filteredPeriods.length > 0) {
-      setSelectedPeriodId(filteredPeriods[0].id);
+    if (filteredPeriods.length > 0) {
+      const isSelectedInFiltered = filteredPeriods.some(p => p.id === selectedPeriodId);
+      if (!isSelectedInFiltered) {
+        setSelectedPeriodId(filteredPeriods[0].id);
+      }
+    } else {
+      setSelectedPeriodId(null);
     }
   }, [filteredPeriods, selectedPeriodId]);
 
@@ -212,7 +246,7 @@ export default function Dashboard({
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                שבועות פעילים
+                דיווח פעיל
               </button>
               <button
                 onClick={() => {
@@ -230,7 +264,7 @@ export default function Dashboard({
             </div>
 
             {/* List of Periods */}
-            <div className="space-y-2.5 max-h-[400px] overflow-y-auto pl-1">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pl-1">
               {filteredPeriods.length === 0 ? (
                 <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
@@ -238,50 +272,64 @@ export default function Dashboard({
                   <p className="text-[10px] text-slate-400 mt-1">לחץ על 'דיווח חדש' למעלה כדי להתחיל</p>
                 </div>
               ) : (
-                filteredPeriods.map(p => {
-                  const itemsCount = (expenses[p.id] || []).length;
-                  const totalCost = (expenses[p.id] || []).reduce((sum, e) => sum + e.totalCost, 0);
-                  const isSelected = p.id === selectedPeriodId;
-
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => setSelectedPeriodId(p.id)}
-                      className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between group ${
-                        isSelected 
-                          ? 'bg-blue-900 text-white border-blue-900 shadow-lg shadow-blue-100' 
-                          : 'bg-white hover:bg-slate-50 border-slate-100'
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-slate-800'}`}>
-                          {p.weekLabel}
-                        </p>
-                        <p className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'} font-medium`}>
-                          תאריך דיווח: {p.date || p.startDate}
-                        </p>
-                        <div className="flex gap-2 pt-1">
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                            isSelected ? 'bg-blue-950 text-white' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {itemsCount} {itemsCount === 1 ? 'הוצאה' : 'הוצאות'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-left flex items-center gap-2">
-                        <div>
-                          <p className={`text-sm font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                            ₪{totalCost.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                        <ChevronLeft className={`h-4 w-4 shrink-0 transition-transform ${
-                          isSelected ? 'text-white -translate-x-1' : 'text-slate-400 group-hover:-translate-x-1'
-                        }`} />
-                      </div>
+                sortedGroupKeys.map(groupKey => (
+                  <div key={groupKey} className="space-y-2">
+                    {/* Month/Year Divider */}
+                    <div className="flex items-center gap-2 pt-1 pb-1 px-1">
+                      <span className="text-[10px] font-bold text-blue-900 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/30">
+                        {groupKey}
+                      </span>
+                      <div className="h-px flex-1 bg-slate-100" />
                     </div>
-                  );
-                })
+
+                    <div className="space-y-2">
+                      {groupedPeriods[groupKey].map(p => {
+                        const itemsCount = (expenses[p.id] || []).length;
+                        const totalCost = (expenses[p.id] || []).reduce((sum, e) => sum + e.totalCost, 0);
+                        const isSelected = p.id === selectedPeriodId;
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => setSelectedPeriodId(p.id)}
+                            className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between group ${
+                              isSelected 
+                                ? 'bg-blue-900 text-white border-blue-900 shadow-lg shadow-blue-100' 
+                                : 'bg-white hover:bg-slate-50 border-slate-100 shadow-xs'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                                {p.weekLabel}
+                              </p>
+                              <p className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'} font-medium`}>
+                                תאריך דיווח: {p.date || p.startDate}
+                              </p>
+                              <div className="flex gap-2 pt-1">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                  isSelected ? 'bg-blue-950 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {itemsCount} {itemsCount === 1 ? 'הוצאה' : 'הוצאות'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="text-left flex items-center gap-2">
+                              <div>
+                                <p className={`text-sm font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                                  ₪{totalCost.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                              </div>
+                              <ChevronLeft className={`h-4 w-4 shrink-0 transition-transform ${
+                                isSelected ? 'text-white -translate-x-1' : 'text-slate-400 group-hover:-translate-x-1'
+                              }`} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>

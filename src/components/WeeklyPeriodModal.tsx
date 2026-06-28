@@ -104,7 +104,7 @@ export default function WeeklyPeriodModal({ isOpen, onClose, onSave, initialPeri
               />
             </div>
             <p className="text-[10px] text-slate-400 mt-1.5">
-              דיווחים מתאריך השבוע הנוכחי יוגדרו כפעילים. תאריכים ישנים יותר יתווספו אוטומטית לארכיון.
+              הדיווח החדש ביותר שהוגש ייחשב לפעיל במערכת, ודיווחים ישנים או קודמים יותר יועברו אוטומטית לארכיון.
             </p>
           </div>
 
