@@ -56,5 +56,7 @@ export interface AppUser {
 export interface BrandConfig {
   logoUrl?: string;
   orgName: string;
+  adminEmail?: string;
+  adminPassword?: string;
 }
 

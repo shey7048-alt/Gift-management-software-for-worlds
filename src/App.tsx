@@ -108,8 +108,10 @@ export default function App() {
 
   // Brand config state
   const [brandConfig, setBrandConfig] = useState<BrandConfig>({
-    logoUrl: localStorage.getItem('shai_olamot_logo_url') || '',
-    orgName: localStorage.getItem('shai_olamot_org_name') || 'שי אולמות',
+    logoUrl: localStorage.getItem('shai_olamot_logo_url') || 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
+    orgName: localStorage.getItem('shai_olamot_org_name') || 'שי עולמות',
+    adminEmail: 'shey7048@gmail.com',
+    adminPassword: '1234'
   });
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
 
@@ -120,6 +122,42 @@ export default function App() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [selectedPeriodForExpense, setSelectedPeriodForExpense] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Load Brand Config on Mount (Available before and after login)
+  useEffect(() => {
+    const loadBrandConfig = async () => {
+      if (isFirebaseAvailable && db) {
+        try {
+          const brandDoc = await getDoc(doc(db, 'settings', 'brand'));
+          if (brandDoc.exists()) {
+            const data = brandDoc.data() as BrandConfig;
+            setBrandConfig(prev => ({ ...prev, ...data }));
+            if (data.logoUrl) {
+              localStorage.setItem('shai_olamot_logo_url', data.logoUrl);
+            } else {
+              localStorage.removeItem('shai_olamot_logo_url');
+            }
+            localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
+          } else {
+            // Document does not exist yet. Seed/Initialize the brand settings document!
+            const initialBrand: BrandConfig = {
+              orgName: 'שי עולמות',
+              logoUrl: 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
+              adminEmail: 'shey7048@gmail.com',
+              adminPassword: '1234'
+            };
+            await setDoc(doc(db, 'settings', 'brand'), initialBrand);
+            setBrandConfig(initialBrand);
+            localStorage.setItem('shai_olamot_logo_url', initialBrand.logoUrl || '');
+            localStorage.setItem('shai_olamot_org_name', initialBrand.orgName);
+          }
+        } catch (brandError) {
+          console.error("Error loading brand config:", brandError);
+        }
+      }
+    };
+    loadBrandConfig();
+  }, []);
 
   // Authenticate monitor
   useEffect(() => {
@@ -138,7 +176,7 @@ export default function App() {
       });
       return unsubscribe;
     } else {
-      // Offline / sandbox mode checks
+      // Offline fallback checks
       const cachedUser = localStorage.getItem('shai_olamot_cached_user');
       if (cachedUser) {
         setUser(JSON.parse(cachedUser));
@@ -213,13 +251,13 @@ export default function App() {
             const brandDoc = await getDoc(doc(db, 'settings', 'brand'));
             if (brandDoc.exists()) {
               const data = brandDoc.data() as BrandConfig;
-              setBrandConfig(data);
+              setBrandConfig(prev => ({ ...prev, ...data }));
               if (data.logoUrl) {
                 localStorage.setItem('shai_olamot_logo_url', data.logoUrl);
               } else {
                 localStorage.removeItem('shai_olamot_logo_url');
               }
-              localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי אולמות');
+              localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
             }
           } catch (brandError) {
             console.error("Error loading brand config:", brandError);
@@ -436,7 +474,7 @@ export default function App() {
       {dbLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-4">
           <div className="relative">
-            <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin" />
             <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-amber-500 animate-pulse" />
           </div>
           <p className="text-sm font-semibold text-slate-600">Synchronizing database logs...</p>

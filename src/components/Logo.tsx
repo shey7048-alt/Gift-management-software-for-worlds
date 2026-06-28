@@ -28,9 +28,9 @@ export default function Logo({ brandConfig, className = "h-8 w-8", iconClassName
     );
   }
 
-  // Beautiful fallback: Golden crown/event canopy with emerald gradient circle
+  // Beautiful fallback: Golden crown/event canopy with luxury royal blue gradient circle
   return (
-    <div className={`relative flex items-center justify-center bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 rounded-xl shadow-inner text-white ${className}`}>
+    <div className={`relative flex items-center justify-center bg-gradient-to-tr from-slate-900 via-blue-900 to-indigo-800 rounded-xl shadow-inner text-white ${className}`}>
       <svg
         viewBox="0 0 24 24"
         fill="none"

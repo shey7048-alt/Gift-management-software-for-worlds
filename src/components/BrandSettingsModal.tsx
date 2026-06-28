@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Image, Check, RefreshCw } from 'lucide-react';
+import { X, Sparkles, Image, Check, RefreshCw, Mail, Lock } from 'lucide-react';
 import { BrandConfig } from '../types';
 
 interface BrandSettingsModalProps {
@@ -11,25 +11,27 @@ interface BrandSettingsModalProps {
 
 const PRESET_LOGOS = [
   {
-    name: 'Emerald Royal',
-    url: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?w=128&fit=crop&q=80',
-    desc: 'Classic business stamp logo'
+    name: 'לוגו שי עולמות',
+    url: 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
+    desc: 'הלוגו הרשמי של שי עולמות'
   },
   {
-    name: 'Modern Gold',
+    name: 'זהב מלכותי',
     url: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=128&fit=crop&q=80',
-    desc: 'Golden luxury corporate emblem'
+    desc: 'לוגו סגנון זהב קלאסי'
   },
   {
-    name: 'Geometric Blue',
-    url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=128&fit=crop&q=80',
-    desc: 'Hi-tech abstract pattern'
+    name: 'אינדיגו יוקרתי',
+    url: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?w=128&fit=crop&q=80',
+    desc: 'חותם מודרני בצבע כחול-כהה'
   }
 ];
 
 export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSave }: BrandSettingsModalProps) {
   const [logoUrl, setLogoUrl] = useState(brandConfig.logoUrl || '');
-  const [orgName, setOrgName] = useState(brandConfig.orgName || 'שי אולמות');
+  const [orgName, setOrgName] = useState(brandConfig.orgName || 'שי עולמות');
+  const [adminEmail, setAdminEmail] = useState(brandConfig.adminEmail || 'shey7048@gmail.com');
+  const [adminPassword, setAdminPassword] = useState(brandConfig.adminPassword || '1234');
   const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
@@ -40,15 +42,17 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
     setTimeout(() => {
       onSave({
         logoUrl: logoUrl.trim() || undefined,
-        orgName: orgName.trim() || 'שי אולמות'
+        orgName: orgName.trim() || 'שי עולמות',
+        adminEmail: adminEmail.trim() || 'shey7048@gmail.com',
+        adminPassword: adminPassword.trim() || '1234'
       });
       setSaving(false);
       onClose();
-    }, 400);
+    }, 500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
       {/* Backdrop */}
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
@@ -60,24 +64,24 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
           <div>
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              הגדרות מיתוג ולוגו
+              הגדרות מערכת ומיתוג
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Customize the system branding, name, and logo.
+              עדכן את שם המותג, לוגו הכניסה ופרטי גישת המנהל (מסתנכרן ישירות מול השרת)
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-full transition-colors"
+            className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-full transition-colors mr-auto ml-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
               שם הארגון / המוסד
             </label>
             <input
@@ -85,36 +89,34 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
               required
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-semibold"
-              placeholder="שי אולמות"
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900 text-sm font-semibold"
+              placeholder="שי עולמות"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-              קישור ללוגו (Logo Image URL)
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+              קישור לתמונת הלוגו (Logo URL)
             </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <div className="relative rounded-xl shadow-sm">
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
                 <Image className="h-4 w-4" />
               </div>
               <input
                 type="url"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-slate-600 font-mono text-xs"
+                className="w-full pr-10 pl-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900 text-sm text-slate-600 font-mono text-xs"
                 placeholder="https://example.com/logo.png"
+                style={{ direction: 'ltr' }}
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 leading-normal">
-              הדבק כאן את קישור הלוגו שלך. הלוגו יוצג אוטומטית בכל חלקי המערכת.
-            </p>
           </div>
 
           {/* Quick Preset Options */}
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-              דוגמאות לוגו מוכנות (Presets)
+            <span className="block text-[11px] font-bold text-slate-500 mb-2">
+              בחירה מהירה מתוך לוגואים מוכנים:
             </span>
             <div className="grid grid-cols-3 gap-2">
               {PRESET_LOGOS.map((preset) => (
@@ -122,10 +124,10 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
                   key={preset.name}
                   type="button"
                   onClick={() => setLogoUrl(preset.url)}
-                  className={`p-2 rounded-xl border text-left transition-all ${
+                  className={`p-2 rounded-xl border text-center transition-all ${
                     logoUrl === preset.url
-                      ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500'
-                      : 'border-slate-100 bg-slate-50/50 hover:bg-slate-100 hover:border-slate-200'
+                      ? 'border-blue-900 bg-blue-50/50 ring-1 ring-blue-900'
+                      : 'border-slate-100 bg-slate-50/50 hover:bg-slate-100'
                   }`}
                 >
                   <img
@@ -134,15 +136,68 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
                     className="h-8 w-8 object-cover rounded-lg mb-1 mx-auto"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="text-[10px] font-bold text-slate-700 text-center truncate">{preset.name}</div>
+                  <div className="text-[10px] font-bold text-slate-700 truncate">{preset.name}</div>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Admin Credentials Section */}
+          <div className="pt-3 border-t border-slate-100 space-y-3">
+            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <Lock className="h-4 w-4 text-blue-900" />
+              פרטי התחברות של מנהל (Email & Password)
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">
+                  כתובת מייל מנהל
+                </label>
+                <div className="relative rounded-xl shadow-sm">
+                  <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                    <Mail className="h-3.5 w-3.5" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    className="w-full pr-8 pl-2 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 text-xs font-mono"
+                    placeholder="email@example.com"
+                    style={{ direction: 'ltr' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">
+                  סיסמת מנהל חדשה
+                </label>
+                <div className="relative rounded-xl shadow-sm">
+                  <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="h-3.5 w-3.5" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full pr-8 pl-2 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 text-xs font-mono"
+                    placeholder="1234"
+                    style={{ direction: 'ltr' }}
+                  />
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-amber-600 font-semibold leading-normal">
+              שינוי פרטים אלו יעדכן מיד את הגישה בשרת ובכל המכשירים של שי עולמות.
+            </p>
+          </div>
+
           {/* Logo Live Preview */}
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100/80 flex items-center gap-4">
-            <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100/80 flex items-center gap-3">
+            <div className="bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
               {logoUrl ? (
                 <img
                   src={logoUrl}
@@ -150,19 +205,19 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
                   className="h-10 w-10 object-contain rounded-lg"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?w=128&fit=crop&q=80';
+                    (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png';
                   }}
                 />
               ) : (
-                <div className="h-10 w-10 flex items-center justify-center bg-emerald-600 text-white rounded-lg font-bold text-xs">
+                <div className="h-10 w-10 flex items-center justify-center bg-blue-900 text-white rounded-lg font-bold text-xs">
                   ש
                 </div>
               )}
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">תצוגה מקדימה של הלוגו</div>
-              <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                {orgName} &bull; מותאם למסמכים ולדוחות
+              <div className="text-xs font-bold text-slate-800">תצוגה מקדימה של המיתוג</div>
+              <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                {orgName} &bull; מנהל פעיל: {adminEmail}
               </div>
             </div>
           </div>
@@ -179,14 +234,14 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-100 transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-100 transition-all flex items-center gap-2"
             >
               {saving ? (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Check className="h-3.5 w-3.5" />
               )}
-              <span>שמור שינויים</span>
+              <span>שמור הגדרות</span>
             </button>
           </div>
         </form>

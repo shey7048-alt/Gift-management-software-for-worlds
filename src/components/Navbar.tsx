@@ -22,7 +22,7 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
                 {brandConfig.orgName}
               </h1>
-              <p className="text-xs text-slate-500 font-medium">Shai Olamot Expense Management</p>
+              <p className="text-xs text-slate-500 font-medium">ניהול הוצאות שי עולמות</p>
             </div>
           </div>
 
@@ -32,9 +32,9 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               <span className="text-sm font-semibold text-slate-700">
                 {user.displayName || user.email.split('@')[0]}
               </span>
-              <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 mt-0.5">
-                <User className="h-3 w-3" />
-                <span>Administrator</span>
+              <span className="text-xs text-blue-900 font-bold bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1 mt-0.5">
+                <User className="h-3 w-3 text-blue-800" />
+                <span>מנהל מערכת</span>
               </span>
             </div>
 
@@ -43,23 +43,10 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               <button
                 onClick={onEditBrand}
                 title="הגדרות מיתוג ולוגו"
-                className="p-2 border border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 rounded-xl transition-all duration-150"
+                className="p-2 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 text-slate-500 rounded-xl transition-all duration-150"
               >
                 <Settings className="h-4 w-4" />
               </button>
-
-              {/* Dev mode / Firebase status indicator */}
-              <span 
-                className={`text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md hidden md:inline-flex items-center gap-1 ${
-                  isFirebaseAvailable 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                    : 'bg-amber-50 text-amber-700 border border-amber-100'
-                }`}
-                title={isFirebaseAvailable ? "Connected to live Firebase Firestore" : "Using offline-ready Local Storage fallback"}
-              >
-                {!isFirebaseAvailable && <AlertCircle className="h-3 w-3" />}
-                {isFirebaseAvailable ? 'Cloud Sync Live' : 'Sandbox (Offline)'}
-              </span>
 
               <button
                 id="logout-btn"

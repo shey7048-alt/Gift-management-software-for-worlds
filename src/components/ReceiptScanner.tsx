@@ -29,7 +29,7 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
 
     // Check file size (limit base64 to ~3MB to be safe and responsive)
     if (file.size > 3 * 1024 * 1024) {
-      setError("File size is too large. Please upload an image or PDF under 3MB.");
+      setError("גודל הקובץ גדול מדי. אנא העלה תמונה או מסמך קטן מ-3MB.");
       return;
     }
 
@@ -49,12 +49,11 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
     }
 
     try {
-      setLoadingStep("Converting file format...");
+      setLoadingStep("מכין את קובץ הקבלה לפענוח...");
       const base64Data = await fileToBase64(file);
 
-      setLoadingStep("Uploading safely to server...");
-      // Simulate/Trigger API Call to backend
-      setLoadingStep("Gemini analyzing receipt text...");
+      setLoadingStep("מעלה בצורה מאובטחת...");
+      setLoadingStep("בינה מלאכותית (Gemini) מפענחת את הקבלה...");
       
       const response = await fetch('/api/scan-receipt', {
         method: 'POST',
@@ -69,14 +68,14 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
 
       if (!response.ok) {
         const errResult = await response.json().catch(() => ({}));
-        throw new Error(errResult.error || "Failed to scan receipt image.");
+        throw new Error(errResult.error || "לא ניתן לפענח את קובץ הקבלה כעת.");
       }
 
-      setLoadingStep("Structuring financial parameters...");
+      setLoadingStep("מעבד ומחלץ את נתוני התשלום...");
       const result = await response.json();
 
       if (result.success && result.data) {
-        setLoadingStep("Finalizing extraction...");
+        setLoadingStep("משלים פענוח פיננסי...");
         setTimeout(() => {
           onScanComplete({
             date: result.data.date || new Date().toISOString().split('T')[0],
@@ -93,12 +92,12 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
           setLoading(false);
         }, 500);
       } else {
-        throw new Error("Invalid response format from scanning engine.");
+        throw new Error("קובץ לא קריא או שלא נמצאו נתונים מתאימים.");
       }
 
     } catch (err: any) {
       console.error("Receipt Scanning Error:", err);
-      setError(err.message || "Failed to parse receipt. Please verify image quality and try again.");
+      setError(err.message || "פענוח הקבלה נכשל. ודא שהתמונה ברורה ומלא את הפרטים ידנית.");
       setLoading(false);
     }
   };
@@ -143,7 +142,7 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
   };
 
   return (
-    <div id="receipt-scanner-root" className="space-y-4">
+    <div id="receipt-scanner-root" className="space-y-4" dir="rtl">
       <div 
         id="drag-drop-area"
         onDragEnter={handleDrag}
@@ -153,8 +152,8 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         onClick={triggerFileSelect}
         className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-150 ${
           isDragActive 
-            ? 'border-emerald-500 bg-emerald-50/50' 
-            : 'border-slate-200 hover:border-emerald-400 hover:bg-slate-50'
+            ? 'border-blue-900 bg-blue-50/50' 
+            : 'border-slate-200 hover:border-blue-900 hover:bg-slate-50'
         }`}
       >
         <input 
@@ -169,45 +168,45 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-6 space-y-3">
             <div className="relative">
-              <Loader2 className="animate-spin h-10 w-10 text-emerald-600" />
-              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-amber-400 animate-bounce" />
+              <Loader2 className="animate-spin h-10 w-10 text-blue-900" />
+              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-amber-500 animate-bounce" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">{loadingStep}</p>
-              <p className="text-xs text-slate-400 mt-1">Our Gemini model is scanning items & prices</p>
+              <p className="text-sm font-bold text-slate-800">{loadingStep}</p>
+              <p className="text-xs text-slate-400 mt-1">מנוע הבינה המלאכותית מפענח פריטים, מחירים ותאריכים</p>
             </div>
             
             {/* Visual Laser Scan Effect */}
             {preview && (
               <div className="relative mt-4 w-32 h-32 mx-auto overflow-hidden rounded-lg border border-slate-200">
-                <img src={preview} alt="Scanning preview" className="w-full h-full object-cover filter blur-[0.5px]" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 shadow-md shadow-emerald-400 animate-[bounce_2s_infinite]"></div>
+                <img src={preview} alt="Scanning preview" className="w-full h-full object-cover filter blur-[0.5px]" referrerPolicy="no-referrer" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-blue-900 shadow-md shadow-blue-400 animate-[bounce_2s_infinite]"></div>
               </div>
             )}
           </div>
         ) : success ? (
           <div className="flex flex-col items-center justify-center py-6 space-y-2">
-            <CheckCircle className="h-10 w-10 text-emerald-600" />
-            <p className="text-sm font-semibold text-slate-800">Scanned Successfully!</p>
-            <p className="text-xs text-slate-400">All fields have been filled automatically from receipt</p>
+            <CheckCircle className="h-10 w-10 text-blue-900" />
+            <p className="text-sm font-bold text-slate-800">הפענוח הושלם בהצלחה!</p>
+            <p className="text-xs text-slate-400">כל השדות בטופס מולאו אוטומטית מתוך מסמך הקבלה</p>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-full">
+            <div className="inline-flex p-3 bg-blue-50 text-blue-900 rounded-full border border-blue-100">
               <UploadCloud className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">
-                Upload or drag receipt file here
+              <p className="text-sm font-bold text-slate-800">
+                לחץ כאן או גרור את קובץ הקבלה לכאן
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Supports JPEG, PNG, or PDF up to 3MB
+                תומך בתמונות (JPEG, PNG) ומסמכי PDF עד 3MB
               </p>
             </div>
             <div className="pt-2 flex justify-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">
-                <Sparkles className="h-3 w-3 text-emerald-600" />
-                Gemini Auto-Scan Enabled
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-900 px-2 py-0.5 rounded-md">
+                <Sparkles className="h-3 w-3 text-blue-900" />
+                סורק Gemini מופעל
               </span>
             </div>
           </div>
@@ -215,11 +214,11 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
       </div>
 
       {error && (
-        <div id="scanner-error-message" className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2.5">
+        <div id="scanner-error-message" className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-xs flex items-start gap-2.5 font-semibold">
           <AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-rose-800">Scan Failed</p>
-            <p className="text-rose-600 text-xs mt-0.5">{error}</p>
+            <p className="font-bold text-rose-800">הסריקה נכשלה</p>
+            <p className="text-rose-600 text-[11px] mt-0.5">{error}</p>
           </div>
         </div>
       )}
