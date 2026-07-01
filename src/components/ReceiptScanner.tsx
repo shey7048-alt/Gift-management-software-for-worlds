@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Sparkles, Loader2, AlertCircle, CheckCircle, FileText } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 
 interface ReceiptScannerProps {
   onScanComplete: (data: {
@@ -18,18 +18,16 @@ interface ReceiptScannerProps {
 export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = async (file: File) => {
     if (!file) return;
 
-    // Check file size (limit base64 to ~3MB to be safe and responsive)
+    // Check file size (limit base64 to ~3MB to be safe and responsive in Firestore)
     if (file.size > 3 * 1024 * 1024) {
-      setError("גודל הקובץ גדול מדי. אנא העלה תמונה או מסמך קטן מ-3MB.");
+      setError("גודל הקובץ גדול מדי. אנא העלה קובץ קטן מ-3MB לצורך שמירה יעילה.");
       return;
     }
 
@@ -37,67 +35,29 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
     setError(null);
     setSuccess(false);
 
-    // Show preview for images
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPreview(null);
-    }
-
     try {
-      setLoadingStep("מכין את קובץ הקבלה לפענוח...");
       const base64Data = await fileToBase64(file);
-
-      setLoadingStep("מעלה בצורה מאובטחת...");
-      setLoadingStep("בינה מלאכותית (Gemini) מפענחת את הקבלה...");
       
-      const response = await fetch('/api/scan-receipt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileBase64: base64Data,
-          mimeType: file.type || 'image/jpeg',
-        }),
+      // Extract file name without extension to use as a helpful default description
+      const nameWithoutExt = file.name.split('.').slice(0, -1).join('.') || file.name;
+
+      onScanComplete({
+        date: new Date().toISOString().split('T')[0],
+        description: nameWithoutExt,
+        category: 'אחר',
+        costPerItem: 0,
+        quantity: 1,
+        totalCost: 0,
+        receiptBase64: base64Data,
+        receiptName: file.name,
+        receiptType: file.type,
       });
 
-      if (!response.ok) {
-        const errResult = await response.json().catch(() => ({}));
-        throw new Error(errResult.error || "לא ניתן לפענח את קובץ הקבלה כעת.");
-      }
-
-      setLoadingStep("מעבד ומחלץ את נתוני התשלום...");
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setLoadingStep("משלים פענוח פיננסי...");
-        setTimeout(() => {
-          onScanComplete({
-            date: result.data.date || new Date().toISOString().split('T')[0],
-            description: result.data.description || file.name.split('.')[0],
-            category: result.data.category || 'אחר',
-            costPerItem: parseFloat(result.data.costPerItem) || 0,
-            quantity: parseInt(result.data.quantity) || 1,
-            totalCost: parseFloat(result.data.totalCost) || parseFloat(result.data.costPerItem) || 0,
-            receiptBase64: base64Data,
-            receiptName: file.name,
-            receiptType: file.type,
-          });
-          setSuccess(true);
-          setLoading(false);
-        }, 500);
-      } else {
-        throw new Error("קובץ לא קריא או שלא נמצאו נתונים מתאימים.");
-      }
-
+      setSuccess(true);
     } catch (err: any) {
-      console.error("Receipt Scanning Error:", err);
-      setError(err.message || "פענוח הקבלה נכשל. ודא שהתמונה ברורה ומלא את הפרטים ידנית.");
+      console.error("Receipt loading error:", err);
+      setError("אירעה שגיאה בטעינת הקובץ. אנא נסה שוב.");
+    } finally {
       setLoading(false);
     }
   };
@@ -150,7 +110,7 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         onDragLeave={handleDrag}
         onDrop={handleDrop}
         onClick={triggerFileSelect}
-        className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-150 ${
+        className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-150 ${
           isDragActive 
             ? 'border-blue-900 bg-blue-50/50' 
             : 'border-slate-200 hover:border-blue-900 hover:bg-slate-50'
@@ -166,29 +126,18 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         />
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-6 space-y-3">
-            <div className="relative">
-              <Loader2 className="animate-spin h-10 w-10 text-blue-900" />
-              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-amber-500 animate-bounce" />
-            </div>
+          <div className="flex flex-col items-center justify-center py-6 space-y-3 animate-pulse">
+            <UploadCloud className="h-10 w-10 text-blue-900 animate-bounce" />
             <div>
-              <p className="text-sm font-bold text-slate-800">{loadingStep}</p>
-              <p className="text-xs text-slate-400 mt-1">מנוע הבינה המלאכותית מפענח פריטים, מחירים ותאריכים</p>
+              <p className="text-sm font-bold text-slate-800">טוען ומצרף קובץ קבלה...</p>
+              <p className="text-xs text-slate-400 mt-1">מכין את המסמך לשמירה מאובטחת במאגר</p>
             </div>
-            
-            {/* Visual Laser Scan Effect */}
-            {preview && (
-              <div className="relative mt-4 w-32 h-32 mx-auto overflow-hidden rounded-lg border border-slate-200">
-                <img src={preview} alt="Scanning preview" className="w-full h-full object-cover filter blur-[0.5px]" referrerPolicy="no-referrer" />
-                <div className="absolute top-0 left-0 w-full h-1 bg-blue-900 shadow-md shadow-blue-400 animate-[bounce_2s_infinite]"></div>
-              </div>
-            )}
           </div>
         ) : success ? (
           <div className="flex flex-col items-center justify-center py-6 space-y-2">
-            <CheckCircle className="h-10 w-10 text-blue-900" />
-            <p className="text-sm font-bold text-slate-800">הפענוח הושלם בהצלחה!</p>
-            <p className="text-xs text-slate-400">כל השדות בטופס מולאו אוטומטית מתוך מסמך הקבלה</p>
+            <CheckCircle className="h-10 w-10 text-emerald-600" />
+            <p className="text-sm font-bold text-slate-800">הקובץ צורף בהצלחה!</p>
+            <p className="text-xs text-slate-400">הקובץ נשמר ישירות במאגר הנתונים בעת שמירת ההוצאה</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -204,9 +153,8 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
               </p>
             </div>
             <div className="pt-2 flex justify-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-900 px-2 py-0.5 rounded-md">
-                <Sparkles className="h-3 w-3 text-blue-900" />
-                סורק Gemini מופעל
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                שמירה ישירה במאגר
               </span>
             </div>
           </div>
@@ -217,7 +165,7 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         <div id="scanner-error-message" className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-xs flex items-start gap-2.5 font-semibold">
           <AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-rose-800">הסריקה נכשלה</p>
+            <p className="font-bold text-rose-800">טעינת הקובץ נכשלה</p>
             <p className="text-rose-600 text-[11px] mt-0.5">{error}</p>
           </div>
         </div>

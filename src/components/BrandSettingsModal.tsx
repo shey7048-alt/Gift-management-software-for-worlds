@@ -44,7 +44,7 @@ export default function BrandSettingsModal({ isOpen, onClose, brandConfig, onSav
               שינוי סיסמת מנהל
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              עדכן את סיסמת הגישה לממשק הניהול של עולמות
+              עדכן את סיסמת הגישה לממשק הניהול של שי עולמות
             </p>
           </div>
           <button

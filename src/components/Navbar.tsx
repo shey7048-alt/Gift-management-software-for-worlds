@@ -22,7 +22,7 @@ export default function Navbar({ user, brandConfig, onEditBrand, onLogout }: Nav
               <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
                 {brandConfig.orgName}
               </h1>
-              <p className="text-xs text-slate-500 font-medium">ניהול הוצאות עולמות</p>
+              <p className="text-xs text-slate-500 font-medium">ניהול הוצאות שי עולמות</p>
             </div>
           </div>
 

@@ -23,7 +23,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
   const [receiptType, setReceiptType] = useState<string | undefined>(undefined);
   
   const [loading, setLoading] = useState(false);
-  const [scannedFields, setScannedFields] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     if (initialExpense) {
@@ -36,7 +35,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
       setReceiptBase64(initialExpense.receiptBase64);
       setReceiptName(initialExpense.receiptName);
       setReceiptType(initialExpense.receiptType);
-      setScannedFields({});
     } else {
       setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
@@ -47,39 +45,25 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
       setReceiptBase64(undefined);
       setReceiptName(undefined);
       setReceiptType(undefined);
-      setScannedFields({});
     }
   }, [initialExpense, isOpen]);
 
   // Handle multiplication
   useEffect(() => {
-    if (!scannedFields['totalCost']) {
-      setTotalCost(parseFloat((costPerItem * quantity).toFixed(2)));
-    }
+    setTotalCost(parseFloat((costPerItem * quantity).toFixed(2)));
   }, [costPerItem, quantity]);
 
   if (!isOpen) return null;
 
   const handleScanComplete = (scannedData: any) => {
-    setDate(scannedData.date);
-    setDescription(scannedData.description);
-    setCategory(scannedData.category);
-    setCostPerItem(scannedData.costPerItem);
-    setQuantity(scannedData.quantity);
-    setTotalCost(scannedData.totalCost);
     setReceiptBase64(scannedData.receiptBase64);
     setReceiptName(scannedData.receiptName);
     setReceiptType(scannedData.receiptType);
     
-    // Mark fields as auto-filled for sparkles visual aid
-    setScannedFields({
-      date: true,
-      description: true,
-      category: true,
-      costPerItem: true,
-      quantity: true,
-      totalCost: true,
-    });
+    // Set default description to filename if empty
+    if (!description && scannedData.description) {
+      setDescription(scannedData.description);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,9 +95,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
     setReceiptBase64(undefined);
     setReceiptName(undefined);
     setReceiptType(undefined);
-    const updatedFields = { ...scannedFields };
-    delete updatedFields['receipt'];
-    setScannedFields(updatedFields);
   };
 
   return (
@@ -145,15 +126,8 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex justify-between items-center">
                 <span>תאריך הרכישה</span>
-                {scannedFields['date'] && (
-                  <span className="text-[10px] font-bold text-blue-900 flex items-center gap-0.5 bg-blue-50 px-1.5 py-0.5 rounded">
-                    <Sparkles className="h-2.5 w-2.5" /> מולא ע"י AI
-                  </span>
-                )}
               </label>
-              <div className={`relative rounded-xl border transition-all ${
-                scannedFields['date'] ? 'border-blue-900/50 bg-blue-50/5 ring-2 ring-blue-900/10' : 'border-slate-200'
-              }`}>
+              <div className="relative rounded-xl border border-slate-200 transition-all">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                   <Calendar className="h-4 w-4" />
                 </div>
@@ -164,7 +138,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                   value={date}
                   onChange={(e) => {
                     setDate(e.target.value);
-                    setScannedFields({ ...scannedFields, date: false });
                   }}
                   className="block w-full pr-10 pl-3.5 py-2.5 text-slate-800 bg-transparent rounded-xl focus:outline-none focus:ring-0 border-0 text-sm"
                   style={{ direction: 'ltr' }}
@@ -176,15 +149,8 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex justify-between items-center">
                 <span>תיאור הפריט / פירוט הוצאה</span>
-                {scannedFields['description'] && (
-                  <span className="text-[10px] font-bold text-blue-900 flex items-center gap-0.5 bg-blue-50 px-1.5 py-0.5 rounded">
-                    <Sparkles className="h-2.5 w-2.5" /> מולא ע"י AI
-                  </span>
-                )}
               </label>
-              <div className={`relative rounded-xl border transition-all ${
-                scannedFields['description'] ? 'border-blue-900/50 bg-blue-50/5 ring-2 ring-blue-900/10' : 'border-slate-200'
-              }`}>
+              <div className="relative rounded-xl border border-slate-200 transition-all">
                 <div className="absolute inset-y-0 right-0 pr-3 pt-3 pointer-events-none text-slate-400">
                   <FileText className="h-4 w-4" />
                 </div>
@@ -195,7 +161,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                   value={description}
                   onChange={(e) => {
                     setDescription(e.target.value);
-                    setScannedFields({ ...scannedFields, description: false });
                   }}
                   placeholder="מה נרכש? (למשל: רכישת חומרי בניין, ציוד משרדי, כיבוד וכו')"
                   className="block w-full pr-10 pl-3.5 py-2.5 text-slate-800 bg-transparent rounded-xl focus:outline-none focus:ring-0 border-0 text-sm"
@@ -207,15 +172,8 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex justify-between items-center">
                 <span>קטגוריית הוצאה</span>
-                {scannedFields['category'] && (
-                  <span className="text-[10px] font-bold text-blue-900 flex items-center gap-0.5 bg-blue-50 px-1.5 py-0.5 rounded">
-                    <Sparkles className="h-2.5 w-2.5" /> מולא ע"י AI
-                  </span>
-                )}
               </label>
-              <div className={`relative rounded-xl border transition-all ${
-                scannedFields['category'] ? 'border-blue-900/50 bg-blue-50/5 ring-2 ring-blue-900/10' : 'border-slate-200'
-              }`}>
+              <div className="relative rounded-xl border border-slate-200 transition-all">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                   <Tag className="h-4 w-4" />
                 </div>
@@ -224,7 +182,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                   value={category}
                   onChange={(e) => {
                     setCategory(e.target.value);
-                    setScannedFields({ ...scannedFields, category: false });
                   }}
                   className="block w-full pr-10 pl-3.5 py-2.5 text-slate-800 bg-transparent rounded-xl focus:outline-none focus:ring-0 border-0 text-sm font-semibold"
                 >
@@ -241,9 +198,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   מחיר יחידה (₪)
                 </label>
-                <div className={`relative rounded-xl border transition-all ${
-                  scannedFields['costPerItem'] ? 'border-blue-900/30 bg-blue-50/5' : 'border-slate-200'
-                }`}>
+                <div className="relative rounded-xl border border-slate-200 transition-all">
                   <input
                     id="expense-price"
                     type="number"
@@ -253,7 +208,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                     value={costPerItem}
                     onChange={(e) => {
                       setCostPerItem(parseFloat(e.target.value) || 0);
-                      setScannedFields({ ...scannedFields, costPerItem: false });
                     }}
                     className="block w-full px-3 py-2.5 text-slate-800 bg-transparent rounded-xl focus:outline-none focus:ring-0 border-0 text-sm text-center font-bold"
                   />
@@ -264,9 +218,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   כמות יח'
                 </label>
-                <div className={`relative rounded-xl border transition-all ${
-                  scannedFields['quantity'] ? 'border-blue-900/30 bg-blue-50/5' : 'border-slate-200'
-                }`}>
+                <div className="relative rounded-xl border border-slate-200 transition-all">
                   <input
                     id="expense-qty"
                     type="number"
@@ -275,7 +227,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                     value={quantity}
                     onChange={(e) => {
                       setQuantity(parseInt(e.target.value) || 1);
-                      setScannedFields({ ...scannedFields, quantity: false });
                     }}
                     className="block w-full px-3 py-2.5 text-slate-800 bg-transparent rounded-xl focus:outline-none focus:ring-0 border-0 text-sm text-center font-bold"
                   />
@@ -286,9 +237,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   סה״כ לתשלום
                 </label>
-                <div className={`relative rounded-xl border bg-slate-50 transition-all ${
-                  scannedFields['totalCost'] ? 'border-blue-900 bg-blue-50 ring-2 ring-blue-900/10' : 'border-slate-200'
-                }`}>
+                <div className="relative rounded-xl border bg-slate-50 border-slate-200 transition-all">
                   <input
                     id="expense-total"
                     type="number"
@@ -298,7 +247,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
                     value={totalCost}
                     onChange={(e) => {
                       setTotalCost(parseFloat(e.target.value) || 0);
-                      setScannedFields({ ...scannedFields, totalCost: true });
                     }}
                     className="block w-full px-3 py-2.5 text-slate-900 bg-transparent font-black rounded-xl focus:outline-none focus:ring-0 border-0 text-sm text-center"
                   />
@@ -325,7 +273,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
               {loading ? (
                 <Loader2 className="animate-spin h-4 w-4" />
               ) : (
-                <Sparkles className="h-4 w-4 text-blue-100" />
+                <CheckCircle className="h-4 w-4 text-blue-100" />
               )}
               <span>{initialExpense ? 'שמור שינויים' : 'תיעוד הוצאה'}</span>
             </button>
@@ -337,12 +285,12 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="p-1.5 bg-blue-50 text-blue-900 rounded-lg border border-blue-100">
-                <Sparkles className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
               </span>
-              <h4 className="font-bold text-slate-800">סריקה ופענוח קבלה חכם (AI)</h4>
+              <h4 className="font-bold text-slate-800">צירוף קובץ קבלה / חשבונית</h4>
             </div>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              העלה תמונה ברורה, סריקה או מסמך קבלה (חשבונית). מנוע ה-AI של Gemini ינתח את המסמך ויזין את השדות (תאריך, פירוט, סכום וקטגוריה) אוטומטית!
+              גרור והשלך קובץ קבלה (חשבונית או תמונה) או לחץ לבחירת קובץ כדי לצרף אותו ישירות לרשומת ההוצאה. הקובץ יישמר בצורה מאובטחת במאגר הנתונים של המערכת.
             </p>
 
             {receiptBase64 ? (
@@ -384,7 +332,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialExpense, 
           
           <div className="hidden md:block pt-6 border-t border-slate-100">
             <span className="text-[10px] text-slate-400 font-semibold tracking-wider block">
-              מערכת ניהול תקציבית - עולמות
+              מערכת ניהול תקציבית - שי עולמות
             </span>
           </div>
         </div>

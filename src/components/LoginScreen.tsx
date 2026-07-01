@@ -10,7 +10,6 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreenProps) {
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,31 +19,30 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
     setLoading(true);
     setError(null);
 
-    const inputEmail = email.toLowerCase().trim();
     const inputPassword = password;
 
-    if (!inputEmail || !inputPassword) {
-      setError("אנא מלא את כל השדות.");
+    if (!inputPassword) {
+      setError("אנא הזן סיסמה.");
       setLoading(false);
       return;
     }
 
-    // Custom Firestore/Local credentials validation (Supports "1234" custom admin password)
+    // Custom Firestore/Local credentials validation (Supports custom admin password)
     const targetEmail = (brandConfig.adminEmail || 'shey7048@gmail.com').toLowerCase().trim();
     const targetPassword = brandConfig.adminPassword || '1234';
 
-    if (inputEmail === targetEmail && inputPassword === targetPassword) {
+    if (inputPassword === targetPassword) {
       if (isFirebaseAvailable && auth) {
         try {
           // Attempt to authenticate the custom admin in Firebase Auth as well
           let userCredential = null;
           try {
-            userCredential = await signInWithEmailAndPassword(auth, inputEmail, inputPassword);
+            userCredential = await signInWithEmailAndPassword(auth, targetEmail, inputPassword);
           } catch (signInErr: any) {
             // If the user doesn't exist in Firebase Auth yet, auto-create it
             if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
               try {
-                userCredential = await createUserWithEmailAndPassword(auth, inputEmail, inputPassword);
+                userCredential = await createUserWithEmailAndPassword(auth, targetEmail, inputPassword);
               } catch (createErr) {
                 console.warn("Could not auto-create Firebase Auth user:", createErr);
               }
@@ -56,7 +54,7 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
           onLoginSuccess({
             uid: userCredential?.user.uid || 'admin-uid',
             email: targetEmail,
-            displayName: brandConfig.orgName || 'עולמות',
+            displayName: brandConfig.orgName || 'שי עולמות',
           });
           setLoading(false);
           return;
@@ -69,32 +67,30 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
       onLoginSuccess({
         uid: 'admin-uid',
         email: targetEmail,
-        displayName: brandConfig.orgName || 'עולמות',
+        displayName: brandConfig.orgName || 'שי עולמות',
       });
       setLoading(false);
       return;
     }
 
-    // Fallback to Firebase Auth if they want to check another account (or if custom settings don't match)
+    // Fallback to Firebase Auth using pre-configured admin email
     try {
       if (isFirebaseAvailable && auth) {
-        const userCredential = await signInWithEmailAndPassword(auth, inputEmail, inputPassword);
+        const userCredential = await signInWithEmailAndPassword(auth, targetEmail, inputPassword);
         onLoginSuccess({
           uid: userCredential.user.uid,
           email: userCredential.user.email || '',
           displayName: userCredential.user.displayName || undefined,
         });
       } else {
-        setError("שגיאת התחברות: פרטי הגישה שהזנת אינם נכונים.");
+        setError("הסיסמה שהזנת אינה נכונה. אנא נסה שוב.");
       }
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/operation-not-allowed') {
-        setError("שגיאת התחברות: פרטי הגישה שהזנת אינם נכונים.");
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError("אימייל או סיסמה שגויים. אנא נסה שוב.");
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError("הסיסמה שהזנת אינה נכונה. אנא נסה שוב.");
       } else {
-        setError("אירעה שגיאה בחיבור לשרת. אנא ודא שפרטי הגישה נכונים.");
+        setError("אירעה שגיאה בחיבור לשרת או שהסיסמה שגויה. אנא נסה שוב.");
       }
     } finally {
       setLoading(false);
@@ -107,14 +103,14 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
         <div className="flex flex-col justify-center items-center gap-4 mb-4">
           <Logo brandConfig={brandConfig} className="h-24 w-24 shadow-xl shadow-blue-100/50 border border-slate-100 rounded-2xl" iconClassName="h-12 w-12" />
           <h1 className="text-3xl font-black tracking-tight text-slate-950 font-sans">
-            {brandConfig.orgName || 'עולמות'}
+            {brandConfig.orgName || 'שי עולמות'}
           </h1>
         </div>
         <h2 className="text-lg font-bold tracking-tight text-slate-700">
           פורטל הוצאות ודיווח פיננסי
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          כניסה מאובטחת לניהול ודיווח הוצאות
+          כניסה מאובטחת באמצעות סיסמה
         </p>
       </div>
 
@@ -129,29 +125,8 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="login-email" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                כתובת דוא"ל (Email)
-              </label>
-              <div className="relative rounded-xl shadow-sm">
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <input
-                  id="login-email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pr-10 pl-3.5 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900 text-sm placeholder-slate-400 font-medium"
-                  placeholder="name@example.com"
-                  style={{ direction: 'ltr' }}
-                />
-              </div>
-            </div>
-
-            <div>
               <label htmlFor="login-password" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                סיסמה (Password)
+                סיסמת גישה למערכת (Password)
               </label>
               <div className="relative rounded-xl shadow-sm">
                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
@@ -164,7 +139,7 @@ export default function LoginScreen({ brandConfig, onLoginSuccess }: LoginScreen
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pr-10 pl-3.5 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900 text-sm placeholder-slate-400 font-medium font-mono"
-                  placeholder="••••••••"
+                  placeholder="הזן סיסמת מנהל"
                   style={{ direction: 'ltr' }}
                 />
               </div>

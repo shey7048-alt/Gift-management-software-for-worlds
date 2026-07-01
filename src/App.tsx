@@ -136,7 +136,7 @@ export default function App() {
   // Brand config state
   const [brandConfig, setBrandConfig] = useState<BrandConfig>({
     logoUrl: localStorage.getItem('shai_olamot_logo_url') || 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
-    orgName: localStorage.getItem('shai_olamot_org_name') || 'עולמות',
+    orgName: localStorage.getItem('shai_olamot_org_name') || 'שי עולמות',
     adminEmail: 'shey7048@gmail.com',
     adminPassword: '1234'
   });
@@ -164,11 +164,11 @@ export default function App() {
             } else {
               localStorage.removeItem('shai_olamot_logo_url');
             }
-            localStorage.setItem('shai_olamot_org_name', data.orgName || 'עולמות');
+            localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
           } else {
             // Document does not exist yet. Seed/Initialize the brand settings document!
             const initialBrand: BrandConfig = {
-              orgName: 'עולמות',
+              orgName: 'שי עולמות',
               logoUrl: 'https://raw.githubusercontent.com/shey3132/-22/refs/heads/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%A9%D7%99%20%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA.png',
               adminEmail: 'shey7048@gmail.com',
               adminPassword: '1234'
@@ -304,7 +304,7 @@ export default function App() {
               } else {
                 localStorage.removeItem('shai_olamot_logo_url');
               }
-              localStorage.setItem('shai_olamot_org_name', data.orgName || 'עולמות');
+              localStorage.setItem('shai_olamot_org_name', data.orgName || 'שי עולמות');
             }
           } catch (brandError) {
             console.error("Error loading brand config:", brandError);
